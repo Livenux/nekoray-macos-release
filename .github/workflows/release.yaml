@@ -15,7 +15,7 @@ permissions:
   packages: write
   pages: write
   statuses: write
-  security-envents: write
+  security-events: write
   pull-requests: write
   deployments: write
   checks: write
