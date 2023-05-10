@@ -23,7 +23,7 @@ jobs:
         id: local_release
         uses: oprypin/find-latest-tag@v1
         with:
-          repository: Livenux/action-test
+          repository: Livenux/nekoray-macos-release
           releases-only: true
       - name: Print local and remote release tags
         run: |

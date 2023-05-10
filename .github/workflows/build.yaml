@@ -26,7 +26,7 @@ jobs:
         id: latest-release
         uses: oprypin/find-latest-tag@v1
         with:
-          repository: fincod/actions-test
+          repository: Livenux/nekoray-macos-release
           releases-only: true
       - name: Install Dependencies
         run: |
