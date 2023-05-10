@@ -1,0 +1,99 @@
+---
+name: Build and upload Artifact
+
+on:
+  workflow_run:
+    workflows: ["Create Release"]
+    types:
+      - completed
+#  release:
+#   types: [published, released]
+  workflow_dispatch:
+
+env:
+  MACOSX_DEPLOYMENT_TARGET: 10.9
+  GOOS: darwin
+  GOARCH: amd64
+  GITHUB_TOKEN: ${{ secrets.PAT }}
+
+jobs:
+  build:
+    runs-on: macos-latest
+    name: Build Nekoray
+
+    steps:
+      - name: Get Last Release
+        id: latest-release
+        uses: oprypin/find-latest-tag@v1
+        with:
+          repository: fincod/actions-test
+          releases-only: true
+      - name: Install Dependencies
+        run: |
+          brew update
+          brew install cmake ninja qt@5
+          npm install -g appdmg
+      - name: Set Environment
+        run: |
+          echo /usr/local/opt/qt@5/bin >> $GITHUB_PATH
+          echo LDFLAGS="-L/usr/local/opt/qt@5/lib" >> $GITHUB_ENV
+          echo CPPFLAGS="-I/usr/local/opt/qt@5/include" >> $GITHUB_ENV
+          echo PKG_CONFIG_PATH="/usr/local/opt/qt@5/lib/pkgconfig" >> $GITHUB_ENV
+          echo NEKORAY_SOURCE=$PWD/nekoray >> $GITHUB_ENV
+          echo NEKORAY_APP=nekoray-${{ github.ref_name }}-MacOS-Intel.app >> $GITHUB_ENV
+          echo NEKORAY_DMG=nekoray-${{ github.ref_name }}-MacOS-Intel.dmg >> $GITHUB_ENV
+
+      - name: Checkout Nekoray
+        uses: actions/checkout@v3
+        with:
+          repository: MatsuriDayo/nekoray
+          path: nekoray
+          ref: ${{ github.ref_name }}
+          submodules: recursive
+      - name: Build c/c++ Dependencies
+        working-directory: ./nekoray
+        run: |
+          mkdir -p build
+          bash ./libs/build_deps_all.sh
+      - name: Get Go Source and Build Core
+        working-directory: ./nekoray
+        # core path $PWD/deployment/macos-amd64
+        run: |
+          bash libs/get_source.sh
+          bash libs/build_go.sh
+      - name: Build Nekoray
+        working-directory: ./nekoray/build
+        run: |
+          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DNKR_PACKAGE_MACOS=1 ..
+          ninja
+          macdeployqt nekoray.app -verbose=1
+          mv nekoray.app $NEKORAY_APP
+
+      - name: Download Geo Data
+        working-directory: ./nekoray/build
+        run: |
+          curl -fLso $NEKORAY_APP/Contents/MacOS/geoip.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+          curl -fLso $NEKORAY_APP/Contents/MacOS/geosite.dat "https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat"
+          curl -fLso $NEKORAY_APP/Contents/MacOS/geoip.db "https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db"
+          curl -fLso $NEKORAY_APP/Contents/MacOS/geosite.db "https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db"
+      - name: Add Luanguage File
+        working-directory: ./nekoray/build
+        run: |
+          cp fa_IR.qm $NEKORAY_APP/Contents/MacOS
+          cp zh_CN.qm $NEKORAY_APP/Contents/MacOS
+      - name: Add Core file
+        working-directory: ./nekoray/build
+        run: |
+          cp $NEKORAY_SOURCE/deployment/macos-$GOARCH/* $NEKORAY_APP/Contents/MacOS
+      - name: Create DMG-images
+        working-directory: ./nekoray
+        run: |
+          cd $NEKORAY_SOURCE
+          sed -i'' -e "s/nekoray.app/$NEKORAY_APP/g" appdmg.json
+          appdmg appdmg.json build/$NEKORAY_DMG
+      - name: Upload elease assets
+        working-directory: ./nekoray/build
+        run: gh release upload ${{ steps.latest-release.outputs.tag }} $NEKORAY_DMG
+
+
+
