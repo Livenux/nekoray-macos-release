@@ -86,6 +86,7 @@ jobs:
           echo NEKORAY_SOURCE=$PWD/nekoray >> $GITHUB_ENV
           echo NEKORAY_APP=nekoray-${{ github.ref_name }}-MacOS-Intel.app >> $GITHUB_ENV
           echo NEKORAY_DMG=nekoray-${{ github.ref_name }}-MacOS-Intel.dmg >> $GITHUB_ENV
+          echo GOTOOLCHAIN=local >> $GITHUB_ENV
           echo GH_TOKEN=${{ secrets.GITHUB_TOKEN }} >> $GITHUB_ENV
 
       - name: Checkout Nekoray
