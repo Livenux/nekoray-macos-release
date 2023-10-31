@@ -8,17 +8,6 @@ on:
     - cron: '0 3 * * *'
   workflow_dispatch:
 
-permissions:
-  actions: read
-  contents: write
-  issues: write
-  packages: write
-  pages: write
-  statuses: write
-  security-events: write
-  pull-requests: write
-  deployments: write
-  checks: write
 
 env:
   MACOSX_DEPLOYMENT_TARGET: 10.9
@@ -138,5 +127,8 @@ jobs:
           sed -i'' -e "s/nekoray.app/$NEKORAY_APP/g" appdmg.json
           appdmg appdmg.json build/$NEKORAY_DMG
       - name: Upload Release assets
-        working-directory: ./nekoray/build
-        run: gh release upload ${{ steps.latest-release.outputs.tag }} $NEKORAY_DMG
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.latest-release.outputs.tag }}
+          path: ./nekoray/build/$NEKORAY_DMG
+  
