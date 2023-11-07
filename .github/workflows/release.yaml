@@ -64,7 +64,7 @@ jobs:
           releases-only: true
       - name: Install Dependencies
         run: |
-          python3 -m pip install packaging
+          python3 -m pip install setuptools 
           brew update
           brew install cmake ninja qt@5
           npm install -g appdmg
