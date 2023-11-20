@@ -13,7 +13,7 @@ env:
   MACOSX_DEPLOYMENT_TARGET: 10.9
   GOOS: darwin
   GOARCH: amd64
-  GOTOOLCHAIN: local
+  GOTOOLCHAIN: go1.21.1
 
 
 jobs:
