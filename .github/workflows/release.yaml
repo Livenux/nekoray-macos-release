@@ -88,12 +88,13 @@ jobs:
         run: |
           mkdir -p build
           bash ./libs/build_deps_all.sh
-      - name: Get Go Source and Build Core
-        working-directory: ./nekoray
-        # core path $PWD/deployment/macos-amd64
+      - name: setup golang version
         uses: actions/setup-go@v4
         with:
           go-version: ">=1.21.0"
+      - name: Get Go Source and Build Core
+        working-directory: ./nekoray
+        # core path $PWD/deployment/macos-amd64
         run: |
           bash libs/get_source.sh
           bash libs/build_go.sh
