@@ -1,20 +1,17 @@
 ---
 name: Create Release
 
-
 on:
   schedule:
     # Executed every Wednesday and Friday
-    - cron: '0 3 * * *'
+    - cron: "0 3 * * *"
   workflow_dispatch:
-
 
 env:
   MACOSX_DEPLOYMENT_TARGET: 10.9
   GOOS: darwin
   GOARCH: amd64
-  GOTOOLCHAIN: go1.21.1
-
+  GOTOOLCHAIN: go1.21.0
 
 jobs:
   create_release:
@@ -22,7 +19,7 @@ jobs:
     steps:
       - name: Get nekoray last tag
         # result: steps.id.outputs.tag
-        id:  nekoray_release 
+        id: nekoray_release
         uses: oprypin/find-latest-tag@v1
         with:
           repository: MatsuriDayo/nekoray
@@ -37,7 +34,7 @@ jobs:
         run: |
           echo Nekoray Release Tag =  "${{ steps.nekoray_release.outputs.tag }}"
           echo Local Release Tag = "${{ steps.local_release.outputs.tag }}"
-      
+
       - name: Checkout Self
         if: steps.nekoray_release.outputs.tag != steps.local_release.outputs.tag
         uses: actions/checkout@v3
@@ -64,7 +61,7 @@ jobs:
           releases-only: true
       - name: Install Dependencies
         run: |
-          python3 -m pip install setuptools 
+          python3 -m pip install setuptools
           brew update
           brew install cmake ninja qt@5
           npm install -g appdmg
@@ -78,7 +75,6 @@ jobs:
           echo NEKORAY_APP=nekoray-${{ github.ref_name }}-MacOS-Intel.app >> $GITHUB_ENV
           echo NEKORAY_DMG=nekoray-${{ github.ref_name }}-MacOS-Intel.dmg >> $GITHUB_ENV
 
-
       - name: Checkout Nekoray
         uses: actions/checkout@v3
         with:
@@ -86,6 +82,7 @@ jobs:
           path: nekoray
           ref: ${{ github.ref_name }}
           submodules: recursive
+
       - name: Build c/c++ Dependencies
         working-directory: ./nekoray
         run: |
@@ -94,6 +91,9 @@ jobs:
       - name: Get Go Source and Build Core
         working-directory: ./nekoray
         # core path $PWD/deployment/macos-amd64
+        uses: actions/setup-go@v4
+        with:
+          go-version: ">=1.21.0"
         run: |
           bash libs/get_source.sh
           bash libs/build_go.sh
@@ -132,4 +132,3 @@ jobs:
         with:
           name: ${{ steps.latest-release.outputs.tag }}
           path: ./nekoray/build/$NEKORAY_DMG
-  
