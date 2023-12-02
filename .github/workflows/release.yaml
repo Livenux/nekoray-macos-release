@@ -35,8 +35,6 @@ jobs:
           echo Nekoray Release Tag =  "${{ steps.nekoray_release.outputs.tag }}"
           echo Local Release Tag = "${{ steps.local_release.outputs.tag }}"
           echo NEKORAY_VERSION=${{ steps.local_release.outputs.tag }} >> $GITHUB_ENV
-          echo NEKORAY_APP=nekoray-${{ setups.nekoray_release.output.tag }}-MacOS-Intel.app >> $GITHUB_ENV
-          echo NEKORAY_DMG=nekoray-${{ setups.nekoray_release.output.tag }}-MacOS-Intel.dmg >> $GITHUB_ENV
 
       - name: Checkout Self
         if: steps.nekoray_release.outputs.tag != steps.local_release.outputs.tag
@@ -75,6 +73,8 @@ jobs:
           echo CPPFLAGS="-I/usr/local/opt/qt@5/include" >> $GITHUB_ENV
           echo PKG_CONFIG_PATH="/usr/local/opt/qt@5/lib/pkgconfig" >> $GITHUB_ENV
           echo NEKORAY_SOURCE=$PWD/nekoray >> $GITHUB_ENV
+          echo NEKORAY_APP=nekoray-${NEKORAY_VERSION}-MacOS-Intel.app >> $GITHUB_ENV
+          echo NEKORAY_DMG=nekoray-${NEKORAY_VERSION}-MacOS-Intel.dmg >> $GITHUB_ENV
 
       - name: Checkout Nekoray
         uses: actions/checkout@v3
