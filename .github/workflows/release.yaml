@@ -134,4 +134,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ steps.latest-release.outputs.tag }}
-          path: ./nekoray/build/${{ NEKORAY_DMG }}
+          path: ./nekoray/build/*.dmg
