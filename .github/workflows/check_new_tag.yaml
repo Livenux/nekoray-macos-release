@@ -1,0 +1,43 @@
+---
+name: Check if nekoray has released a new version
+
+on:
+  schedule:
+    # Executed every Wednesday and Friday
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  create_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get nekoray last tag
+        # result: steps.id.outputs.tag
+        id: nekoray_release
+        uses: oprypin/find-latest-tag@v1
+        with:
+          repository: MatsuriDayo/nekoray
+          releases-only: true
+      - name: Get Local Release
+        id: local_release
+        uses: oprypin/find-latest-tag@v1
+        with:
+          repository: Livenux/nekoray-macos-release
+          releases-only: true
+      - name: Print local and remote release tags
+        run: |
+          echo Nekoray Release Tag:  "${{ steps.nekoray_release.outputs.tag }}"
+          echo Local Release Tag: "${{ steps.local_release.outputs.tag }}"
+
+      - name: Checkout Self
+        if: steps.nekoray_release.outputs.tag != steps.local_release.outputs.tag
+        uses: actions/checkout@v3
+      - name: Create Local Release
+        if: steps.nekoray_release.outputs.tag != steps.local_release.outputs.tag
+        id: create_release_tag
+        uses: rickstaa/action-create-tag@v1
+        with:
+          tag: ${{ steps.nekoray_release.outputs.tag }}
+          message: |
+            Build nekoray from https://github.com/MatsuriDayo/nekoray
+            Release Note see: https://github.com/MatsuriDayo/nekoray/releases/tag/${{ steps.nekoray_release.outputs.tag }}

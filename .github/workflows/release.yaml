@@ -1,12 +1,9 @@
 ---
-name: Create Release
-
+name: build and release
 on:
-  schedule:
-    # Executed every Wednesday and Friday
-    - cron: "0 3 * * *"
-  workflow_dispatch:
-
+  push:
+    tags:
+      - "^[0-9][0-9.]*$"
 env:
   MACOSX_DEPLOYMENT_TARGET: 10.9
   GOOS: darwin
@@ -14,52 +11,14 @@ env:
   GOTOOLCHAIN: go1.21.0
 
 jobs:
-  create_release:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Get nekoray last tag
-        # result: steps.id.outputs.tag
-        id: nekoray_release
-        uses: oprypin/find-latest-tag@v1
-        with:
-          repository: MatsuriDayo/nekoray
-          releases-only: true
-      - name: Get Local Release
-        id: local_release
-        uses: oprypin/find-latest-tag@v1
-        with:
-          repository: Livenux/nekoray-macos-release
-          releases-only: true
-      - name: Print local and remote release tags
-        run: |
-          echo Nekoray Release Tag =  "${{ steps.nekoray_release.outputs.tag }}"
-          echo Local Release Tag = "${{ steps.local_release.outputs.tag }}"
-          echo NEKORAY_VERSION=${{ steps.local_release.outputs.tag }} >> $GITHUB_ENV
-
-      - name: Checkout Self
-        if: steps.nekoray_release.outputs.tag != steps.local_release.outputs.tag
-        uses: actions/checkout@v3
-      - name: Create Local Release
-        if: steps.nekoray_release.outputs.tag != steps.local_release.outputs.tag
-        id: create_release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ steps.nekoray_release.outputs.tag }}
-          body: |
-            Build nekoray from https://github.com/MatsuriDayo/nekoray
-            Release Note see: https://github.com/MatsuriDayo/nekoray/releases/tag/${{ steps.nekoray_release.outputs.tag }}
   build:
     needs: create_release
     runs-on: macos-latest
     name: Build Nekoray
 
     steps:
-      - name: Get Last Release
-        id: latest-release
-        uses: oprypin/find-latest-tag@v1
-        with:
-          repository: Livenux/nekoray-macos-release
-          releases-only: true
+      - name: check it
+        run: echo build and release nekoray with version $GITHUB_REF
       - name: Install Dependencies
         run: |
           python3 -m pip install setuptools
@@ -73,15 +32,15 @@ jobs:
           echo CPPFLAGS="-I/usr/local/opt/qt@5/include" >> $GITHUB_ENV
           echo PKG_CONFIG_PATH="/usr/local/opt/qt@5/lib/pkgconfig" >> $GITHUB_ENV
           echo NEKORAY_SOURCE=$PWD/nekoray >> $GITHUB_ENV
-          echo NEKORAY_APP=nekoray-${NEKORAY_VERSION}-MacOS-Intel.app >> $GITHUB_ENV
-          echo NEKORAY_DMG=nekoray-${NEKORAY_VERSION}-MacOS-Intel.dmg >> $GITHUB_ENV
+          echo NEKORAY_APP=nekoray-${GITHUB_REF}-MacOS-Intel.app >> $GITHUB_ENV
+          echo NEKORAY_DMG=nekoray-${GITHUB_REF}-MacOS-Intel.dmg >> $GITHUB_ENV
 
       - name: Checkout Nekoray
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: MatsuriDayo/nekoray
           path: nekoray
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.ref }}
           submodules: recursive
 
       - name: Build c/c++ Dependencies
@@ -131,7 +90,6 @@ jobs:
           sed -i'' -e "s/nekoray.app/$NEKORAY_APP/g" appdmg.json
           appdmg appdmg.json build/$NEKORAY_DMG
       - name: Upload Release assets
-        uses: actions/upload-artifact@v3
+        uses: softprops/action-gh-release@v1
         with:
-          name: ${{ steps.latest-release.outputs.tag }}
-          path: ./nekoray/build/*.dmg
+          files: ./nekoray/build/*.dmg
